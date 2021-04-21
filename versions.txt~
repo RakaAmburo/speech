@@ -1,0 +1,12 @@
+*Bitacora 16 abril 2017
+
+se soluciono el error no match, se cache y arranca de vuelta no es muy elegante pero funca.
+tambien le puse un delay al soltar el boton para que de tiempo al sistema de reconocimiento de vos de captar todo.
+
+
+
+
+
+
+A solucionar
+ver como cachear los crashes que tiene la 

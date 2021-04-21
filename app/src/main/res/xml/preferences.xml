@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <EditTextPreference android:title="REST Service URl"
+        android:key="restUrl"
+        android:summary="Please provide the REST Service URL"/>
+    <EditTextPreference android:title="REST Service Port"
+        android:key="restPort"
+        android:summary="Please provide the REST Service Port"/>
+    <ListPreference
+        android:title="Language"
+        android:summary="Select the language for the Speech Recognition service"
+        android:key="lang"
+        android:defaultValue="1"
+        android:entries="@array/listArray"
+        android:entryValues="@array/listValues" />
+</PreferenceScreen>
