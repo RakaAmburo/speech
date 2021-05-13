@@ -2,9 +2,15 @@ package com.pcordoba.speechtotexttest1;
 
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -28,6 +34,13 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -66,6 +79,7 @@ public class MainActivity extends AppCompatActivity implements
 
     final private int MY_PERMISSIONS_REQUEST_READ_CONTACTS = 1;
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -123,6 +137,8 @@ public class MainActivity extends AppCompatActivity implements
                 return false;
             }
 
+
+            /*@SuppressLint("ClickableViewAccessibility")
             private void askForPermission() {
 
                 String permission = "android.permission.RECORD_AUDIO";
@@ -137,8 +153,61 @@ public class MainActivity extends AppCompatActivity implements
                     }
                 } else {
                 }
-            }
+            }*/
         });
+    }
+
+    private void askForPermission() {
+
+        String permission = "android.permission.RECORD_AUDIO";
+        if (ContextCompat.checkSelfPermission(MainActivity.this, permission) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, permission)) {
+
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{permission}, 1);
+
+            } else {
+
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{permission}, 1);
+            }
+        } else {
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo mWifi = connManager.getActiveNetworkInfo();
+
+        if (mWifi != null && mWifi.isConnected()) {
+
+            capturedVoiceCmd.setText("wifi connected");
+            final WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+            final WifiInfo connectionInfo = wifiManager.getConnectionInfo();
+            if (connectionInfo != null) {
+                String ssid = connectionInfo.getSSID();
+                capturedVoiceCmd.setText(ssid);
+            } else {
+                capturedVoiceCmd.setText("wifi not connected");
+            }
+
+        } else {
+            capturedVoiceCmd.setText("wifi not connected");
+        }
+
+        new Content().execute();
+
+
+       /* askForPermission();
+        progressBar.setVisibility(View.VISIBLE);
+        progressBar.setIndeterminate(true);
+        createSpeech();
+        speech.startListening(recognizerIntent);
+        isEndOfSpeech = false;
+        capturedVoiceCmd.setText("");
+        statusListAdapter.clear();*/
+
     }
 
     private long lastClickTime = 0;
@@ -360,6 +429,35 @@ public class MainActivity extends AppCompatActivity implements
                 }
             });
         } catch (Exception ignored) {
+        }
+    }
+
+    private class Content extends AsyncTask<Void, Void, Void> {
+
+        private String text = "empty";
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+
+            try {
+                Document document = Jsoup.connect("https://slevin08kelevra.github.io/nodeTasks/").get();
+                text = document.selectFirst("section").selectFirst("input").attr("value");
+            } catch (Exception e) {
+                text = "error";
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            capturedVoiceCmd.setText(text);
         }
     }
 }

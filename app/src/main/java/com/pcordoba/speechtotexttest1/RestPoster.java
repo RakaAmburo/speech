@@ -81,8 +81,8 @@ public class RestPoster {
 
         jsonRequest.setRetryPolicy(new DefaultRetryPolicy(
                 40000,
-                2,
-                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+                3,
+                2));
 
         queue.add(jsonRequest);
 
@@ -145,6 +145,7 @@ public class RestPoster {
             String tmfAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
             TrustManagerFactory tmf = TrustManagerFactory.getInstance(tmfAlgorithm);
             tmf.init(trusted);
+
 
             String kmAlg = KeyManagerFactory.getDefaultAlgorithm();
             KeyManagerFactory kmf = KeyManagerFactory.getInstance(kmAlg);
