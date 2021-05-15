@@ -22,6 +22,7 @@ import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Spanned;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -44,7 +45,10 @@ import java.io.StringWriter;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -70,6 +74,8 @@ public class MainActivity extends AppCompatActivity implements
     final private String SPANISH = "es-AR";
     final private String ENGLISH = "en";
     private boolean isEndOfSpeech;
+    private Boolean myWifiIsOn = false;
+    private String usingHost;
 
     public static ListView statusList;
     public static ArrayAdapter<String> statusListAdapter;
@@ -180,7 +186,7 @@ public class MainActivity extends AppCompatActivity implements
         ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo mWifi = connManager.getActiveNetworkInfo();
 
-        Boolean myWifiIsOn = false;
+
         String myWifi = "MIWIFI_2G_qhmE";
 
         if (mWifi != null && mWifi.isConnected()) {
@@ -196,16 +202,19 @@ public class MainActivity extends AppCompatActivity implements
             }
         }
 
-        if (myWifiIsOn){
+        if (myWifiIsOn) {
             ArrayList matches = new ArrayList();
             matches.add("general ping");
-            restUrl = SP.getString("restUrl", "192.168.1.132");
+            usingHost = SP.getString("restUrl", "191.161.1.131");
             restPort = SP.getString("restPort", "8095/send");
-            String status = restPoster.postVoiceResult(matches, restUrl, restPort, this, false);
-            capturedVoiceCmd.setText(restUrl);
-            if (status.equals("OK")){
-                capturedVoiceCmd.setText("Wifi ok!");
-            }
+            restPoster.postVoiceResult(matches, usingHost, restPort, this, false, false);
+
+        } else {
+            ArrayList matches = new ArrayList();
+            matches.add("general ping");
+            usingHost = SP.getString("restUrlRemote", "191.161.1.131");
+            restPort = SP.getString("restPort", "8095/send");
+            restPoster.postVoiceResult(matches, usingHost, restPort, this, false, false);
         }
 
         //new Content().execute();
@@ -220,6 +229,55 @@ public class MainActivity extends AppCompatActivity implements
         capturedVoiceCmd.setText("");
         statusListAdapter.clear();*/
 
+    }
+
+    public void  checkStartingStatus(String status, boolean isLastCheckCall){
+        if (status.equals("OK")) {
+            if (myWifiIsOn){
+                if (isLastCheckCall){
+                    SharedPreferences.Editor editor = SP.edit();
+                    editor.putString("restUrl", usingHost);
+                    editor.commit();
+                }
+                capturedVoiceCmd.setText("Wifi ok! " );
+            } else {
+                if (isLastCheckCall){
+
+                }
+                capturedVoiceCmd.setText("Pepe ok! " );
+            }
+
+        } else if (status.equals("NoConnectionError")) {
+
+            if (isLastCheckCall){
+                capturedVoiceCmd.setText("home voiceCommand not working 1");
+            } else {
+                RemoteProps rp = new RemoteProps();
+                try {
+                    rp.execute().get();
+                    if (usingHost.equals(rp.getHomeHost())){
+                        capturedVoiceCmd.setText("home voiceCommand not working 2");
+                    } else {
+                        ArrayList matches = new ArrayList();
+                        matches.add("general ping");
+                        usingHost = rp.getHomeHost();
+                        capturedVoiceCmd.setText(usingHost);
+                        restPoster.postVoiceResult(matches, usingHost, restPort, this, false, true);
+                    }
+
+                    //capturedVoiceCmd.setText(rp.getHomeHost()+ " " + rp.getRemoteHost() + " " + rp.getSt());
+                } catch (ExecutionException e) {
+                    status = "ExecutionException";
+                    capturedVoiceCmd.setText(status);
+                } catch (InterruptedException e) {
+                    status = "InterruptedException";
+                    capturedVoiceCmd.setText(status);
+                }
+            }
+
+        } else {
+            capturedVoiceCmd.setText("Err: " + status + " lastChk: " + isLastCheckCall);
+        }
     }
 
     private long lastClickTime = 0;
@@ -238,7 +296,7 @@ public class MainActivity extends AppCompatActivity implements
 
         lastClickTime = SystemClock.elapsedRealtime();
 
-        restPoster.postVoiceResult(matches, restUrl, restPort, this, true);
+        restPoster.postVoiceResult(matches, restUrl, restPort, this, true, false);
 
         if (matches.size() >= 1) {
             //text = matches.get(0);
@@ -444,9 +502,13 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    private class Content extends AsyncTask<Void, Void, Void> {
+    private class RemoteProps extends AsyncTask<Void, Void, Void> {
 
         private String text = "empty";
+        private String homeHost;
+        private String remoteHost;
+        private String st;
+        private String error;
 
         @Override
         protected void onPreExecute() {
@@ -458,9 +520,18 @@ public class MainActivity extends AppCompatActivity implements
 
             try {
                 Document document = Jsoup.connect("https://slevin08kelevra.github.io/nodeTasks/").get();
-                text = document.selectFirst("section").selectFirst("input").attr("value");
+                Element section = document.selectFirst("section");
+                String homeHost = section.selectFirst("input[name=lh]").attr("value");
+                String remoteHost = section.selectFirst("input[name=rh]").attr("value");
+                String status = section.selectFirst("input[name=st]").attr("value");
+                this.homeHost = homeHost;
+                this.remoteHost = remoteHost;
+                this.st = status;
+
+
             } catch (Exception e) {
                 text = "error git props";
+                this.error = text;
             }
 
             return null;
@@ -469,7 +540,21 @@ public class MainActivity extends AppCompatActivity implements
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-            capturedVoiceCmd.setText(text);
+        }
+        public String getHomeHost() {
+            return homeHost;
+        }
+
+        public String getRemoteHost() {
+            return remoteHost;
+        }
+
+        public String getSt() {
+            return st;
+        }
+
+        public String getError() {
+            return error;
         }
     }
 }

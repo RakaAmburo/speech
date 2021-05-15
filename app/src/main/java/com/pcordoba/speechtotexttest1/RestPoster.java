@@ -56,7 +56,8 @@ public class RestPoster {
 
     private String status = "OK";
 
-    public String postVoiceResult(ArrayList<String> matches, String restUrl, String restPort, Context context, final boolean show) {
+    public String postVoiceResult(ArrayList<String> matches, String restUrl, String restPort,
+                                  final Context context, final boolean show, final boolean isLastCheckCall) {
 
 
         JSONObject matchesJson = jsonParser(matches);
@@ -67,11 +68,13 @@ public class RestPoster {
 
         JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.POST, url, matchesJson,
                 new Response.Listener<JSONObject>() {
-            
+
                     @Override
                     public void onResponse(JSONObject response) {
-                        if (show){
+                        if (show) {
                             updateReturnedText(response);
+                        } else {
+                            ((MainActivity) context).checkStartingStatus("OK", isLastCheckCall);
                         }
                     }
                 }, new Response.ErrorListener() {
@@ -94,8 +97,10 @@ public class RestPoster {
                 }
 
                 status = message;
-                if (show){
+                if (show) {
                     updateReturnedText(message);
+                } else {
+                    ((MainActivity) context).checkStartingStatus(status, isLastCheckCall);
                 }
                 //updateReturnedText(error.toString());
             }
