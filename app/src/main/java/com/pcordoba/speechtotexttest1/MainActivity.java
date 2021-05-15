@@ -91,8 +91,8 @@ public class MainActivity extends AppCompatActivity implements
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         progressBar.setVisibility(View.INVISIBLE);
 
-        List listItem =  new ArrayList();
-        statusList=(ListView)findViewById(R.id.statusList);
+        List listItem = new ArrayList();
+        statusList = (ListView) findViewById(R.id.statusList);
         statusListAdapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_selectable_list_item, android.R.id.text1, listItem);
         statusList.setAdapter(statusListAdapter);
@@ -180,23 +180,35 @@ public class MainActivity extends AppCompatActivity implements
         ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo mWifi = connManager.getActiveNetworkInfo();
 
+        Boolean myWifiIsOn = false;
+        String myWifi = "MIWIFI_2G_qhmE";
+
         if (mWifi != null && mWifi.isConnected()) {
 
-            capturedVoiceCmd.setText("wifi connected");
             final WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
             final WifiInfo connectionInfo = wifiManager.getConnectionInfo();
             if (connectionInfo != null) {
                 String ssid = connectionInfo.getSSID();
-                capturedVoiceCmd.setText(ssid);
-            } else {
-                capturedVoiceCmd.setText("wifi not connected");
+                //capturedVoiceCmd.setText(ssid);
+                if (ssid.contains(myWifi)) {
+                    myWifiIsOn = true;
+                }
             }
-
-        } else {
-            capturedVoiceCmd.setText("wifi not connected");
         }
 
-        new Content().execute();
+        if (myWifiIsOn){
+            ArrayList matches = new ArrayList();
+            matches.add("general ping");
+            restUrl = SP.getString("restUrl", "192.168.1.132");
+            restPort = SP.getString("restPort", "8095/send");
+            String status = restPoster.postVoiceResult(matches, restUrl, restPort, this, false);
+            capturedVoiceCmd.setText(restUrl);
+            if (status.equals("OK")){
+                capturedVoiceCmd.setText("Wifi ok!");
+            }
+        }
+
+        //new Content().execute();
 
 
        /* askForPermission();
@@ -226,7 +238,7 @@ public class MainActivity extends AppCompatActivity implements
 
         lastClickTime = SystemClock.elapsedRealtime();
 
-        restPoster.postVoiceResult(matches, restUrl, restPort, this);
+        restPoster.postVoiceResult(matches, restUrl, restPort, this, true);
 
         if (matches.size() >= 1) {
             //text = matches.get(0);
@@ -448,7 +460,7 @@ public class MainActivity extends AppCompatActivity implements
                 Document document = Jsoup.connect("https://slevin08kelevra.github.io/nodeTasks/").get();
                 text = document.selectFirst("section").selectFirst("input").attr("value");
             } catch (Exception e) {
-                text = "error";
+                text = "error git props";
             }
 
             return null;

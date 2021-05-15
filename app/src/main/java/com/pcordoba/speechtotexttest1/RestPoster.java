@@ -8,9 +8,14 @@ import android.widget.TextView;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.DefaultRetryPolicy;
+import com.android.volley.NetworkError;
+import com.android.volley.NoConnectionError;
+import com.android.volley.ParseError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
+import com.android.volley.ServerError;
+import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.HurlStack;
 import com.android.volley.toolbox.JsonObjectRequest;
@@ -49,7 +54,11 @@ public class RestPoster {
 
     private String responseText;
 
-    public void postVoiceResult(ArrayList<String> matches, String restUrl, String restPort, Context context) {
+    private String status = "OK";
+
+    public String postVoiceResult(ArrayList<String> matches, String restUrl, String restPort, Context context, final boolean show) {
+
+
         JSONObject matchesJson = jsonParser(matches);
 
         RequestQueue queue = Volley.newRequestQueue(context, new HurlStack(null, newSslSocketFactory()));
@@ -61,12 +70,34 @@ public class RestPoster {
             
                     @Override
                     public void onResponse(JSONObject response) {
-                        updateReturnedText(response);
+                        if (show){
+                            updateReturnedText(response);
+                        }
                     }
                 }, new Response.ErrorListener() {
             @Override
-            public void onErrorResponse(VolleyError error) {
-                updateReturnedText(error.toString());
+            public void onErrorResponse(VolleyError volleyError) {
+
+                String message = null;
+                if (volleyError instanceof NoConnectionError) {
+                    message = "NoConnectionError";
+                } else if (volleyError instanceof ServerError) {
+                    message = "ServerError";
+                } else if (volleyError instanceof AuthFailureError) {
+                    message = "AuthFailureError";
+                } else if (volleyError instanceof ParseError) {
+                    message = "ParseError";
+                } else if (volleyError instanceof NetworkError) {
+                    message = "NetworkError";
+                } else if (volleyError instanceof TimeoutError) {
+                    message = "TimeoutError";
+                }
+
+                status = message;
+                if (show){
+                    updateReturnedText(message);
+                }
+                //updateReturnedText(error.toString());
             }
 
         }) {
@@ -79,13 +110,17 @@ public class RestPoster {
             }
         };
 
+        jsonRequest.setShouldRetryServerErrors(false);
+
         jsonRequest.setRetryPolicy(new DefaultRetryPolicy(
                 40000,
                 3,
                 2));
 
+
         queue.add(jsonRequest);
 
+        return status;
     }
 
     private JSONObject jsonParser(ArrayList<String> matches) {
