@@ -242,7 +242,9 @@ public class MainActivity extends AppCompatActivity implements
                 capturedVoiceCmd.setText("Wifi ok! " );
             } else {
                 if (isLastCheckCall){
-
+                    SharedPreferences.Editor editor = SP.edit();
+                    editor.putString("restUrlRemote", usingHost);
+                    editor.commit();
                 }
                 capturedVoiceCmd.setText("Pepe ok! " );
             }
@@ -255,17 +257,17 @@ public class MainActivity extends AppCompatActivity implements
                 RemoteProps rp = new RemoteProps();
                 try {
                     rp.execute().get();
-                    if (usingHost.equals(rp.getHomeHost())){
+                    String compareAgainstHost = (myWifiIsOn)?rp.getHomeHost():rp.getRemoteHost();
+                    if (usingHost.equals(compareAgainstHost) || usingHost.equals("none")){
                         capturedVoiceCmd.setText("home voiceCommand not working 2");
                     } else {
                         ArrayList matches = new ArrayList();
                         matches.add("general ping");
-                        usingHost = rp.getHomeHost();
-                        capturedVoiceCmd.setText(usingHost);
+                        usingHost = compareAgainstHost;
+                        //capturedVoiceCmd.setText(usingHost);
                         restPoster.postVoiceResult(matches, usingHost, restPort, this, false, true);
                     }
 
-                    //capturedVoiceCmd.setText(rp.getHomeHost()+ " " + rp.getRemoteHost() + " " + rp.getSt());
                 } catch (ExecutionException e) {
                     status = "ExecutionException";
                     capturedVoiceCmd.setText(status);
@@ -296,7 +298,7 @@ public class MainActivity extends AppCompatActivity implements
 
         lastClickTime = SystemClock.elapsedRealtime();
 
-        restPoster.postVoiceResult(matches, restUrl, restPort, this, true, false);
+        restPoster.postVoiceResult(matches, usingHost, restPort, this, true, false);
 
         if (matches.size() >= 1) {
             //text = matches.get(0);
@@ -519,7 +521,7 @@ public class MainActivity extends AppCompatActivity implements
         protected Void doInBackground(Void... voids) {
 
             try {
-                Document document = Jsoup.connect("https://slevin08kelevra.github.io/nodeTasks/").get();
+                Document document = Jsoup.connect("https://raw.githubusercontent.com/Slevin08Kelevra/nodeTasks/props/props.html").get();
                 Element section = document.selectFirst("section");
                 String homeHost = section.selectFirst("input[name=lh]").attr("value");
                 String remoteHost = section.selectFirst("input[name=rh]").attr("value");
