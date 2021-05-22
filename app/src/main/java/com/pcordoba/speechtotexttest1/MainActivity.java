@@ -22,32 +22,24 @@ import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.text.Spanned;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import javax.net.ssl.HostnameVerifier;
@@ -183,6 +175,8 @@ public class MainActivity extends AppCompatActivity implements
     protected void onStart() {
         super.onStart();
 
+        capturedVoiceCmd.setText("Checking connection status!");
+
         ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo mWifi = connManager.getActiveNetworkInfo();
 
@@ -195,7 +189,6 @@ public class MainActivity extends AppCompatActivity implements
             final WifiInfo connectionInfo = wifiManager.getConnectionInfo();
             if (connectionInfo != null) {
                 String ssid = connectionInfo.getSSID();
-                //capturedVoiceCmd.setText(ssid);
                 if (ssid.contains(myWifi)) {
                     myWifiIsOn = true;
                 }
@@ -217,48 +210,36 @@ public class MainActivity extends AppCompatActivity implements
             restPoster.postVoiceResult(matches, usingHost, restPort, this, false, false);
         }
 
-        //new Content().execute();
-
-
-       /* askForPermission();
-        progressBar.setVisibility(View.VISIBLE);
-        progressBar.setIndeterminate(true);
-        createSpeech();
-        speech.startListening(recognizerIntent);
-        isEndOfSpeech = false;
-        capturedVoiceCmd.setText("");
-        statusListAdapter.clear();*/
-
     }
 
-    public void  checkStartingStatus(String status, boolean isLastCheckCall){
+    public void checkStartingStatus(String status, boolean isLastCheckCall) {
         if (status.equals("OK")) {
-            if (myWifiIsOn){
-                if (isLastCheckCall){
+            if (myWifiIsOn) {
+                if (isLastCheckCall) {
                     SharedPreferences.Editor editor = SP.edit();
                     editor.putString("restUrl", usingHost);
                     editor.commit();
                 }
-                capturedVoiceCmd.setText("Wifi ok! " );
+                capturedVoiceCmd.setText("Wifi ok! ");
             } else {
-                if (isLastCheckCall){
+                if (isLastCheckCall) {
                     SharedPreferences.Editor editor = SP.edit();
                     editor.putString("restUrlRemote", usingHost);
                     editor.commit();
                 }
-                capturedVoiceCmd.setText("Pepe ok! " );
+                capturedVoiceCmd.setText("Pepe ok! ");
             }
 
         } else if (status.equals("NoConnectionError")) {
 
-            if (isLastCheckCall){
+            if (isLastCheckCall) {
                 capturedVoiceCmd.setText("home voiceCommand not working 1");
             } else {
                 RemoteProps rp = new RemoteProps();
                 try {
                     rp.execute().get();
-                    String compareAgainstHost = (myWifiIsOn)?rp.getHomeHost():rp.getRemoteHost();
-                    if (usingHost.equals(compareAgainstHost) || usingHost.equals("none")){
+                    String compareAgainstHost = (myWifiIsOn) ? rp.getHomeHost() : rp.getRemoteHost();
+                    if (usingHost.equals(compareAgainstHost) || usingHost.equals("none")) {
                         capturedVoiceCmd.setText("home voiceCommand not working 2");
                     } else {
                         ArrayList matches = new ArrayList();
@@ -543,6 +524,7 @@ public class MainActivity extends AppCompatActivity implements
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
         }
+
         public String getHomeHost() {
             return homeHost;
         }
@@ -559,4 +541,6 @@ public class MainActivity extends AppCompatActivity implements
             return error;
         }
     }
+
+
 }
