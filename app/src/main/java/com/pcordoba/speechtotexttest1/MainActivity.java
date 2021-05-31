@@ -233,14 +233,14 @@ public class MainActivity extends AppCompatActivity implements
         } else if (status.equals("NoConnectionError")) {
 
             if (isLastCheckCall) {
-                capturedVoiceCmd.setText("home voiceCommand not working 1");
+                capturedVoiceCmd.setText("home vc not working, last call.");
             } else {
                 RemoteProps rp = new RemoteProps();
                 try {
                     rp.execute().get();
                     String compareAgainstHost = (myWifiIsOn) ? rp.getHomeHost() : rp.getRemoteHost();
                     if (usingHost.equals(compareAgainstHost) || usingHost.equals("none")) {
-                        capturedVoiceCmd.setText("home voiceCommand not working 2");
+                        capturedVoiceCmd.setText("vc not working, wifi: " + myWifiIsOn + " host: " + compareAgainstHost);
                     } else {
                         ArrayList matches = new ArrayList();
                         matches.add("general ping");
@@ -485,7 +485,7 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    private class RemoteProps extends AsyncTask<Void, Void, Void> {
+    private class  RemoteProps extends AsyncTask<Void, Void, Void> {
 
         private String text = "empty";
         private String homeHost;
