@@ -191,6 +191,8 @@ public class MainActivity extends AppCompatActivity implements
                 String ssid = connectionInfo.getSSID();
                 if (ssid.contains(myWifi)) {
                     myWifiIsOn = true;
+                } else {
+                    myWifiIsOn = false;
                 }
             }
         }
