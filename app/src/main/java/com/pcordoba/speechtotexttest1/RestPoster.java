@@ -36,6 +36,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -110,15 +112,15 @@ public class RestPoster {
             public Map<String, String> getHeaders() throws AuthFailureError {
                 Map<String, String> headers = new HashMap<>();
                 headers.put("Content-Type", "application/json");
-                headers.put("authorization", SignUtil.generateToken());
+                headers.put("authorization", SignUtil.getGeneratedToken());
                 return headers;
             }
         };
 
-        jsonRequest.setShouldRetryServerErrors(false);
+        jsonRequest.setShouldRetryServerErrors(true);
 
         jsonRequest.setRetryPolicy(new DefaultRetryPolicy(
-                40000,
+                30000,
                 3,
                 2));
 
@@ -224,7 +226,14 @@ public class RestPoster {
             int len = stringResponse.length();
             for (int i = 0; i < len; i++) {
                 try {
-                    list.add(stringResponse.get(i).toString());
+                    String resp = stringResponse.get(i).toString();
+                    Matcher m = Pattern.compile("\\((.*?)\\)").matcher(resp);
+                    if (m.find()) {
+                        System.out.println(m.group(1));
+                        list.add(resp.replace("("+m.group(1)+")", ""));
+                    } else {
+                        list.add(stringResponse.get(i).toString());
+                    }
                 } catch (JSONException e) {
                     executedCmd = "Cant extract data from status";
                 }
