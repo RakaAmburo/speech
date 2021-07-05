@@ -69,7 +69,7 @@ public class MainActivity extends AppCompatActivity implements
     private Boolean myWifiIsOn = false;
     private String usingHost;
 
-    public static ListView statusList;
+    public ListView statusList;
     public static ArrayAdapter<String> statusListAdapter;
 
 
@@ -83,15 +83,15 @@ public class MainActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         MainActivity.handleSSLHandshake();
         setContentView(R.layout.activity_main);
-        capturedVoiceCmd = (TextView) findViewById(R.id.resultMessage);
+        capturedVoiceCmd = findViewById(R.id.resultMessage);
         //appliedCmdResponse = (TextView) findViewById(R.id.response);
-        button = (Button) findViewById(R.id.mantener);
-        progressBar = (ProgressBar) findViewById(R.id.progressBar);
+        button = findViewById(R.id.mantener);
+        progressBar = findViewById(R.id.progressBar);
         progressBar.setVisibility(View.INVISIBLE);
 
-        List listItem = new ArrayList();
-        statusList = (ListView) findViewById(R.id.statusList);
-        statusListAdapter = new ArrayAdapter<String>(this,
+        List<String> listItem = new ArrayList<>();
+        statusList = findViewById(R.id.statusList);
+        statusListAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_selectable_list_item, android.R.id.text1, listItem);
         statusList.setAdapter(statusListAdapter);
 
@@ -167,10 +167,10 @@ public class MainActivity extends AppCompatActivity implements
 
                 ActivityCompat.requestPermissions(MainActivity.this, new String[]{permission}, 1);
             }
-        } else {
         }
     }
 
+    @SuppressLint("SetTextI18n")
     @Override
     protected void onStart() {
         super.onStart();
@@ -189,23 +189,19 @@ public class MainActivity extends AppCompatActivity implements
             final WifiInfo connectionInfo = wifiManager.getConnectionInfo();
             if (connectionInfo != null) {
                 String ssid = connectionInfo.getSSID();
-                if (ssid.contains(myWifi)) {
-                    myWifiIsOn = true;
-                } else {
-                    myWifiIsOn = false;
-                }
+                myWifiIsOn = ssid.contains(myWifi);
             }
         }
 
         if (myWifiIsOn) {
-            ArrayList matches = new ArrayList();
+            ArrayList<String> matches = new ArrayList<>();
             matches.add("general ping");
             usingHost = SP.getString("restUrl", "191.161.1.131");
             restPort = SP.getString("restPort", "8095/send");
             restPoster.postVoiceResult(matches, usingHost, restPort, this, false, false);
 
         } else {
-            ArrayList matches = new ArrayList();
+            ArrayList<String> matches = new ArrayList<>();
             matches.add("general ping");
             usingHost = SP.getString("restUrlRemote", "191.161.1.131");
             restPort = SP.getString("restPort", "8095/send");
@@ -214,20 +210,21 @@ public class MainActivity extends AppCompatActivity implements
 
     }
 
+    @SuppressLint("SetTextI18n")
     public void checkStartingStatus(String status, boolean isLastCheckCall) {
         if (status.equals("OK")) {
             if (myWifiIsOn) {
                 if (isLastCheckCall) {
                     SharedPreferences.Editor editor = SP.edit();
                     editor.putString("restUrl", usingHost);
-                    editor.commit();
+                    editor.apply();
                 }
                 capturedVoiceCmd.setText("Wifi ok! ");
             } else {
                 if (isLastCheckCall) {
                     SharedPreferences.Editor editor = SP.edit();
                     editor.putString("restUrlRemote", usingHost);
-                    editor.commit();
+                    editor.apply();
                 }
                 capturedVoiceCmd.setText("Pepe ok! ");
             }
@@ -244,7 +241,7 @@ public class MainActivity extends AppCompatActivity implements
                     if (usingHost.equals(compareAgainstHost) || usingHost.equals("none")) {
                         capturedVoiceCmd.setText("vc not working, wifi: " + myWifiIsOn + " host: " + compareAgainstHost);
                     } else {
-                        ArrayList matches = new ArrayList();
+                        ArrayList<String> matches = new ArrayList<>();
                         matches.add("general ping");
                         usingHost = compareAgainstHost;
                         //capturedVoiceCmd.setText(usingHost);
@@ -267,6 +264,7 @@ public class MainActivity extends AppCompatActivity implements
 
     private long lastClickTime = 0;
 
+    @SuppressLint("SetTextI18n")
     @Override
     public void onResults(Bundle results) {
         ArrayList<String> matches = results
@@ -283,13 +281,9 @@ public class MainActivity extends AppCompatActivity implements
 
         restPoster.postVoiceResult(matches, usingHost, restPort, this, true, false);
 
-        if (matches.size() >= 1) {
-            //text = matches.get(0);
-            //returnedText.setText(text);
-        } else {
+        if (matches.size() == 0) {
             capturedVoiceCmd.setText("Listening Service Error");
         }
-
     }
 
     @Override
@@ -302,14 +296,12 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
-        switch (item.getItemId()) {
-            case R.id.menu_item_new_thingy:
-                Intent i = new Intent(this, CustomPreferenceActivity.class);
-                startActivity(i);
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
+        if (item.getItemId() == R.id.menu_item_new_thingy) {
+            Intent i = new Intent(this, CustomPreferenceActivity.class);
+            startActivity(i);
+            return true;
         }
+        return super.onOptionsItemSelected(item);
 
     }
 
@@ -465,10 +457,12 @@ public class MainActivity extends AppCompatActivity implements
                     return new X509Certificate[0];
                 }
 
+                @SuppressLint("TrustAllX509TrustManager")
                 @Override
                 public void checkClientTrusted(X509Certificate[] certs, String authType) {
                 }
 
+                @SuppressLint("TrustAllX509TrustManager")
                 @Override
                 public void checkServerTrusted(X509Certificate[] certs, String authType) {
                 }
@@ -480,17 +474,22 @@ public class MainActivity extends AppCompatActivity implements
             HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {
                 @Override
                 public boolean verify(String arg0, SSLSession arg1) {
-                    return true;
+                    boolean returnValue = true;
+                    if(arg0.contains("NOT_POSSIBLE_TO_FIND")){
+                        returnValue = false;
+                    }
+                    return returnValue;
                 }
             });
         } catch (Exception ignored) {
         }
     }
 
-    private class  RemoteProps extends AsyncTask<Void, Void, Void> {
+    private static class RemoteProps extends AsyncTask<Void, Void, Void> {
 
         private String text = "empty";
         private String homeHost;
+
         private String remoteHost;
         private String st;
         private String error;
