@@ -26,6 +26,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -70,12 +71,34 @@ public class MainActivity extends AppCompatActivity implements
     private String usingHost;
 
     public ListView statusList;
+    public static List<String> statusListLinks = new ArrayList<>();
     public static ArrayAdapter<String> statusListAdapter;
 
 
     private SharedPreferences SP;
 
     final private int MY_PERMISSIONS_REQUEST_READ_CONTACTS = 1;
+
+    class ClickListener implements AdapterView.OnItemClickListener {
+        private Context context;
+
+        public ClickListener(Context constext) {
+            this.context = constext;
+        }
+
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            if (statusListLinks.size() >= position) {
+                ArrayList<String> matches = new ArrayList<>();
+                String link = statusListLinks.get(position).split(":")[1];
+                matches.add(link);
+                capturedVoiceCmd.setText("");
+                statusListAdapter.clear();
+                restPoster.postVoiceResult(matches, usingHost, restPort, context, true, false);
+
+            }
+        }
+    }
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -94,6 +117,8 @@ public class MainActivity extends AppCompatActivity implements
         statusListAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_selectable_list_item, android.R.id.text1, listItem);
         statusList.setAdapter(statusListAdapter);
+        statusList.setOnItemClickListener(new ClickListener(this));
+
 
 
         SP = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
@@ -475,7 +500,7 @@ public class MainActivity extends AppCompatActivity implements
                 @Override
                 public boolean verify(String arg0, SSLSession arg1) {
                     boolean returnValue = true;
-                    if(arg0.contains("NOT_POSSIBLE_TO_FIND")){
+                    if (arg0.contains("NOT_POSSIBLE_TO_FIND")) {
                         returnValue = false;
                     }
                     return returnValue;

@@ -1,9 +1,8 @@
 package com.pcordoba.speechtotexttest1;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
-import android.util.Base64;
-import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import com.android.volley.AuthFailureError;
@@ -26,16 +25,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -109,7 +104,7 @@ public class RestPoster {
 
         }) {
             @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
+            public Map<String, String> getHeaders() {
                 Map<String, String> headers = new HashMap<>();
                 headers.put("Content-Type", "application/json");
                 headers.put("authorization", SignUtil.getGeneratedToken());
@@ -133,7 +128,7 @@ public class RestPoster {
     private JSONObject jsonParser(ArrayList<String> matches) {
         JSONObject jObject = new JSONObject();
         JSONArray matchesArray = new JSONArray();
-        String message = new String();
+        //String message = new String();
 
         /*if (!matches.isEmpty()){
             message = matches.get(0).toString();
@@ -142,7 +137,7 @@ public class RestPoster {
         matches.remove(0);*/
 
         for (String result : matches) {
-            matchesArray.put(result.toString());
+            matchesArray.put(result);
         }
         try {
             //jObject.put("message", message);
@@ -154,7 +149,7 @@ public class RestPoster {
         return jObject;
     }
 
-
+    @SuppressWarnings("TryFinallyCanBeTryWithResources")
     private SSLSocketFactory newSslSocketFactory() {
         try {
             // Get an instance of the Bouncy Castle KeyStore format
@@ -175,10 +170,12 @@ public class RestPoster {
                     return new X509Certificate[0];
                 }
 
+                @SuppressLint("TrustAllX509TrustManager")
                 @Override
                 public void checkClientTrusted(X509Certificate[] certs, String authType) {
                 }
 
+                @SuppressLint("TrustAllX509TrustManager")
                 @Override
                 public void checkServerTrusted(X509Certificate[] certs, String authType) {
                 }
@@ -196,8 +193,8 @@ public class RestPoster {
             SSLContext context = SSLContext.getInstance("TLS");
             context.init(kmf.getKeyManagers(), trustAllCerts, new SecureRandom());
 
-            SSLSocketFactory sf = context.getSocketFactory();
-            return sf;
+            //SSLSocketFactory sf = context.getSocketFactory();
+            return context.getSocketFactory();
         } catch (Exception e) {
             throw new AssertionError(e);
         }
@@ -221,7 +218,8 @@ public class RestPoster {
             executedCmd = "Cant extract data from json response";
         }
 
-        ArrayList<String> list = new ArrayList<String>();
+        ArrayList<String> list = new ArrayList<>();
+        ArrayList<String> listLinks = new ArrayList<>();
         if (stringResponse != null) {
             int len = stringResponse.length();
             for (int i = 0; i < len; i++) {
@@ -229,8 +227,8 @@ public class RestPoster {
                     String resp = stringResponse.get(i).toString();
                     Matcher m = Pattern.compile("\\((.*?)\\)").matcher(resp);
                     if (m.find()) {
-                        System.out.println(m.group(1));
-                        list.add(resp.replace("("+m.group(1)+")", ""));
+                        listLinks.add(m.group(1));
+                        list.add(resp.replace("(" + m.group(1) + ")", ""));
                     } else {
                         list.add(stringResponse.get(i).toString());
                     }
@@ -241,6 +239,8 @@ public class RestPoster {
         }
 
         MainActivity.statusListAdapter.addAll(list);
+        MainActivity.statusListLinks.clear();
+        MainActivity.statusListLinks.addAll(listLinks);
         TextView capturedVoiceCmd = (TextView) ((Activity) context).findViewById(R.id.resultMessage);
         capturedVoiceCmd.setText(executedCmd);
     }
