@@ -53,6 +53,8 @@ public class RestPoster {
 
     private String status = "OK";
 
+    private static Pattern metaActinExtractorPattern = Pattern.compile("\\((.*?)\\)");
+
     public String postVoiceResult(ArrayList<String> matches, String restUrl, String restPort,
                                   final Context context, final boolean show, final boolean isLastCheckCall) {
 
@@ -202,7 +204,7 @@ public class RestPoster {
 
     private void updateReturnedText(String response) {
 
-        TextView capturedVoiceCmd = (TextView) ((Activity) context).findViewById(R.id.resultMessage);
+        TextView capturedVoiceCmd = ((Activity) context).findViewById(R.id.resultMessage);
         capturedVoiceCmd.setText(response);
     }
 
@@ -225,7 +227,7 @@ public class RestPoster {
             for (int i = 0; i < len; i++) {
                 try {
                     String resp = stringResponse.get(i).toString();
-                    Matcher m = Pattern.compile("\\((.*?)\\)").matcher(resp);
+                    Matcher m = metaActinExtractorPattern.matcher(resp);
                     if (m.find()) {
                         listLinks.add(m.group(1));
                         list.add(resp.replace("(" + m.group(1) + ")", ""));
@@ -241,7 +243,7 @@ public class RestPoster {
         MainActivity.statusListAdapter.addAll(list);
         MainActivity.statusListLinks.clear();
         MainActivity.statusListLinks.addAll(listLinks);
-        TextView capturedVoiceCmd = (TextView) ((Activity) context).findViewById(R.id.resultMessage);
+        TextView capturedVoiceCmd = ((Activity) context).findViewById(R.id.resultMessage);
         capturedVoiceCmd.setText(executedCmd);
     }
 
