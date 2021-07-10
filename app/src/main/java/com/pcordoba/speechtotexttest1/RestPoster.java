@@ -228,10 +228,11 @@ public class RestPoster {
                 try {
                     String resp = stringResponse.get(i).toString();
                     Matcher m = metaActinExtractorPattern.matcher(resp);
-                    if (m.find()) {
+                    if (!resp.contains("REGEX") && m.find()) {
                         listLinks.add(m.group(1));
                         list.add(resp.replace("(" + m.group(1) + ")", ""));
                     } else {
+                        listLinks.add(null);
                         list.add(stringResponse.get(i).toString());
                     }
                 } catch (JSONException e) {
@@ -244,6 +245,9 @@ public class RestPoster {
         MainActivity.statusListLinks.clear();
         MainActivity.statusListLinks.addAll(listLinks);
         TextView capturedVoiceCmd = ((Activity) context).findViewById(R.id.resultMessage);
+        if (executedCmd.contains("REGEX")){
+            executedCmd = executedCmd.substring(0, executedCmd.indexOf("(")+1) + "...";
+        }
         capturedVoiceCmd.setText(executedCmd);
     }
 

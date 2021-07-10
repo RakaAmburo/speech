@@ -58,6 +58,7 @@ public class MainActivity extends AppCompatActivity implements
     private TextView capturedVoiceCmd;
     //private TextView appliedCmdResponse;
     private Button button;
+    private Button button2;
     private ProgressBar progressBar;
     private SpeechRecognizer speech = null;
     private Intent recognizerIntent;
@@ -82,21 +83,48 @@ public class MainActivity extends AppCompatActivity implements
     class ClickListener implements AdapterView.OnItemClickListener {
         private Context context;
 
-        public ClickListener(Context constext) {
-            this.context = constext;
+        public ClickListener(Context context) {
+            this.context = context;
         }
 
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            if (statusListLinks.size() >= position) {
+            if (statusListLinks.size() >= position && statusListLinks.get(position) != null) {
                 ArrayList<String> matches = new ArrayList<>();
                 String link = statusListLinks.get(position).split(":")[1];
                 matches.add(link);
                 capturedVoiceCmd.setText("");
                 statusListAdapter.clear();
                 restPoster.postVoiceResult(matches, usingHost, restPort, context, true, false);
-
             }
+        }
+    }
+
+    class OnTouch implements View.OnTouchListener {
+
+        private Context context;
+
+        public OnTouch(Context context) {
+            this.context = context;
+        }
+
+        @SuppressLint("ClickableViewAccessibility")
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    ArrayList<String> matches = new ArrayList<>();
+                    matches.add("general what can i do");
+                    capturedVoiceCmd.setText("");
+                    statusListAdapter.clear();
+                    restPoster.postVoiceResult(matches, usingHost, restPort, context, true, false);
+                    break;
+                case MotionEvent.ACTION_UP:
+                    capturedVoiceCmd.setText("");
+                    statusListAdapter.clear();
+                    break;
+            }
+            return false;
         }
     }
 
@@ -109,6 +137,7 @@ public class MainActivity extends AppCompatActivity implements
         capturedVoiceCmd = findViewById(R.id.resultMessage);
         //appliedCmdResponse = (TextView) findViewById(R.id.response);
         button = findViewById(R.id.mantener);
+        button2 = findViewById(R.id.wqid);
         progressBar = findViewById(R.id.progressBar);
         progressBar.setVisibility(View.INVISIBLE);
 
@@ -118,7 +147,6 @@ public class MainActivity extends AppCompatActivity implements
                 android.R.layout.simple_selectable_list_item, android.R.id.text1, listItem);
         statusList.setAdapter(statusListAdapter);
         statusList.setOnItemClickListener(new ClickListener(this));
-
 
 
         SP = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
@@ -178,6 +206,8 @@ public class MainActivity extends AppCompatActivity implements
                 }
             }*/
         });
+
+        button2.setOnTouchListener(new OnTouch(this));
     }
 
     private void askForPermission() {
@@ -423,7 +453,7 @@ public class MainActivity extends AppCompatActivity implements
                 message = "Audio recording error";
                 break;
             case SpeechRecognizer.ERROR_CLIENT:
-                message = "Client side error";
+                message = "Client retry";
                 break;
             case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS:
                 message = "Insufficient permissions";
