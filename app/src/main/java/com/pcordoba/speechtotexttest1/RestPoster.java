@@ -3,6 +3,7 @@ package com.pcordoba.speechtotexttest1;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+import android.os.Vibrator;
 import android.widget.TextView;
 
 import com.android.volley.AuthFailureError;
@@ -224,20 +225,41 @@ public class RestPoster {
         ArrayList<String> listLinks = new ArrayList<>();
         if (stringResponse != null) {
             int len = stringResponse.length();
+            boolean vibrate = false;
+            boolean found = false;
+            String foundGroup = "";
             for (int i = 0; i < len; i++) {
                 try {
                     String resp = stringResponse.get(i).toString();
                     Matcher m = metaActinExtractorPattern.matcher(resp);
-                    if (!resp.contains("REGEX") && m.find()) {
+                    found = m.find();
+                    foundGroup = (found)?m.group(1):"";
+                    if (!resp.contains("REGEX") && found && !foundGroup.startsWith("vc-vib")) {
                         listLinks.add(m.group(1));
-                        list.add(resp.replace("(" + m.group(1) + ")", ""));
+                        list.add(resp.replace("(" + foundGroup + ")", ""));
                     } else {
                         listLinks.add(null);
                         list.add(stringResponse.get(i).toString());
                     }
+
+                    if (found && foundGroup.startsWith("vc-vib")){
+                        vibrate = true;
+                    }
                 } catch (JSONException e) {
                     executedCmd = "Cant extract data from status";
                 }
+            }
+
+            if (vibrate && list.size() == 1){
+                String replacement =list.get(0).replaceFirst("\\((.*?)\\)", "");
+                list.set(0, replacement);
+                Vibrator v = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+                Integer times = Integer.valueOf(foundGroup.split(":")[1]);
+                long[] pattern = new long[2 * times];
+                for (int i = 0; i < pattern.length; i++) {
+                    pattern[i] = (i == 0)?0:150;
+                }
+                v.vibrate(pattern, -1);
             }
         }
 
@@ -248,6 +270,7 @@ public class RestPoster {
         if (executedCmd.contains("REGEX")){
             executedCmd = executedCmd.substring(0, executedCmd.indexOf("(")+1) + "...";
         }
+
         capturedVoiceCmd.setText(executedCmd);
     }
 
