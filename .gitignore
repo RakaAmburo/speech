@@ -88,3 +88,4 @@ lint/outputs/
 lint/tmp/
 # lint/reports/
 /app/src/main/res/raw/android.bks
+/app/src/main/java/com/pcordoba/speechtotexttest1/SignUtilTest.java
