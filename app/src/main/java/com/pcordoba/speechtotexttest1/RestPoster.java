@@ -118,9 +118,9 @@ public class RestPoster {
         jsonRequest.setShouldRetryServerErrors(true);
 
         jsonRequest.setRetryPolicy(new DefaultRetryPolicy(
-                30000,
-                3,
-                2));
+                10000,
+                5,
+                1f));
 
 
         queue.add(jsonRequest);
