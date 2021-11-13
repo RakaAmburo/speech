@@ -16,6 +16,21 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+        android.applicationVariants.all { variant ->
+            variant.outputs.all {output ->
+                outputFileName = new File(parent.name + ".apk")
+                def taskSuffix = variant.name.capitalize()
+                def assembleTaskName = "assemble$taskSuffix"
+                if (tasks.findByName(assembleTaskName)) {
+                    def copyAPKFolderTask = tasks.create(name: "archive$taskSuffix", type: org.gradle.api.tasks.Copy) {
+                        from "$buildDir/outputs/apk/debug/"
+                        into "/home/pablo/Dropbox/tasVids/"
+                        include parent.name + ".apk"
+                    }
+                    tasks[assembleTaskName].finalizedBy = [copyAPKFolderTask]
+                }
+            }
+        }
     }
 }
 
